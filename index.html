@@ -31,9 +31,12 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const nm=s=>s.replace(/\s*(\d.*|아주 소량|소량)$/,'');
 let M=[];
+const hd=t=>`<header><h1>유아식 식단</h1><p>${t}</p></header>`;
 async function load(){
+  $('#app').innerHTML=hd('불러오는 중…');
   try{M=await (await fetch(API+'/menus')).json()}catch(e){}
-  if(!M.length)M=await (await fetch('menus.json')).json();
+  if(!M.length){try{M=await (await fetch('menus.json')).json()}catch(e){}}
+  if(!M.length){$('#app').innerHTML=hd('메뉴를 불러오지 못했어요. API 주소와 menus.json 위치를 확인해 주세요.');return}
   route();
 }
 const img=m=>m.ph?`<img src="${API}/photo?id=${m.id}&v=${m.ph}" alt="${esc(m.name)}" loading="lazy">`:'🍲';
