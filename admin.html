@@ -8,7 +8,7 @@ body{margin:auto;max-width:640px;padding:16px;font:15px/1.5 sans-serif;backgroun
 input,textarea,button{font:inherit;width:100%;padding:10px;border:1px solid #c9d8cd;border-radius:10px;background:#fff;margin:4px 0}
 button{width:auto;background:#5f9473;color:#fff;border:0;cursor:pointer}
 button.s{background:#fff;color:#1f3326;border:1px solid #c9d8cd}button.r{background:#b4533f}
-.row{display:flex;gap:8px;align-items:center;background:#fff;border-radius:12px;padding:6px 12px;margin:6px 0}.row span{flex:1}
+.row small{display:block;color:#6b7d70}.row{flex-wrap:wrap;display:flex;gap:8px;align-items:center;background:#fff;border-radius:12px;padding:6px 12px;margin:6px 0}.row span{flex:1}
 label{display:block;margin-top:12px;font-weight:bold}
 </style></head>
 <body><h2>유아식 관리자</h2><div id="a"></div>
@@ -24,10 +24,11 @@ async function api(p,o={}){
 }
 function login(msg=''){$('#a').innerHTML=`<p>${msg}</p><input id="p" type="password" placeholder="관리자 비밀번호"><button onclick="go()">로그인</button>`}
 async function go(){pw=$('#p').value;await api('/auth',{method:'POST'});sessionStorage.pw=pw;init()}
-async function init(){M=await (await fetch(API+'/menus')).json();show()}
+async function init(){M=await (await fetch(API+'/menus')).json();try{P=await (await fetch(API+'/plans')).json()}catch(e){P=[]}show()}
 const save=()=>api('/menus',{method:'POST',body:JSON.stringify(M)});
 function show(){
-  $('#a').innerHTML=`<button onclick="edit()">+ 새 메뉴</button> ${M.length?'':'<button class="s" onclick="seed()">기본 메뉴 19개 불러오기</button>'}
+  if(tab=='p')return showP();
+  $('#a').innerHTML=`${tabs()}<button onclick="edit()">+ 새 메뉴</button> ${M.length?'':'<button class="s" onclick="seed()">기본 메뉴 19개 불러오기</button>'}
   ${M.map(m=>`<div class="row"><span>${esc(m.name)}${m.ph?' 📷':''}</span><button class="s" onclick="edit(${m.id})">수정</button><button class="r" onclick="del(${m.id})">삭제</button></div>`).join('')}`;
 }
 async function seed(){M=await (await fetch('menus.json')).json();await save();show()}
@@ -57,5 +58,31 @@ async function del(id){
   const m=M.find(x=>x.id==id);if(!confirm(`"${m.name}" 메뉴를 삭제할까요?`))return;
   await api('/photo?id='+id,{method:'DELETE'});M=M.filter(x=>x!=m);await save();show();
 }
+let P=[],tab='m';
+const saveP=()=>api('/plans',{method:'POST',body:JSON.stringify(P)});
+const tabs=()=>`<div style="display:flex;gap:8px;margin-bottom:8px"><button class="${tab=='m'?'':'s'}" onclick="tab='m';show()">레시피</button><button class="${tab=='p'?'':'s'}" onclick="tab='p';show()">식단</button></div>`;
+function showP(){
+  $('#a').innerHTML=`${tabs()}<button onclick="editP()">+ 새 식단</button> ${P.length?'':'<button class="s" onclick="seedP()">기본 식단 21개 불러오기</button>'}
+  ${P.map((p,i)=>`<div class="row"><span>${esc(p.title||'식단 '+(i+1))}<small>${esc(p.items.map(t=>t.n).join(' + '))}</small></span><button class="s" onclick="mv(${i},-1)">↑</button><button class="s" onclick="mv(${i},1)">↓</button><button class="s" onclick="editP(${p.id})">수정</button><button class="r" onclick="delP(${p.id})">삭제</button></div>`).join('')}`;
+}
+function editP(id){
+  E=P.find(x=>x.id==id)||{id:Date.now(),title:'',total:'',items:[]};
+  $('#a').innerHTML=`<label>식단 이름 (비워두면 번호로 표시)</label><input id="pt" value="${esc(E.title||'')}">
+  <label>메뉴 (한 줄에 하나: 메뉴명 | 분량)</label><textarea id="pi" rows="7">${esc(E.items.map(t=>t.n+' | '+(t.g||'')).join('\n'))}</textarea>
+  <p>등록된 레시피와 이름이 같으면 레시피로 연결돼요.</p>
+  <label>총량</label><input id="ptt" value="${esc(E.total||'')}" placeholder="예: 140g">
+  <button onclick="svP()">저장</button> <button class="s" onclick="show()">취소</button>`;
+}
+async function svP(){
+  const old=E.items,L=$('#pi').value.split('\n').map(l=>l.trim()).filter(Boolean);
+  if(!L.length)return alert('메뉴를 한 줄 이상 입력하세요.');
+  E.title=$('#pt').value.trim();E.total=$('#ptt').value.trim();
+  E.items=L.map(l=>{const[n,...g]=l.split('|'),nm=n.trim(),r=M.find(x=>x.name==nm),o=old.find(t=>t.n==nm);return{n:nm,g:g.join('|').trim(),r:r?r.id:(o?o.r||0:0)}});
+  if(!P.includes(E))P.push(E);
+  await saveP();show();
+}
+async function delP(id){if(!confirm('이 식단을 삭제할까요?'))return;P=P.filter(x=>x.id!=id);await saveP();show()}
+async function mv(i,d){const j=i+d;if(j<0||j>=P.length)return;[P[i],P[j]]=[P[j],P[i]];await saveP();show()}
+async function seedP(){P=await (await fetch('plans.json')).json();await saveP();show()}
 pw?init():login();
 </script></body></html>
