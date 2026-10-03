@@ -22,33 +22,42 @@ ul,ol{padding-left:22px;margin:0}li{margin:4px 0}
 .bz{display:flex;flex-wrap:wrap;gap:8px}
 .bz a{background:var(--sg);color:#fff;text-decoration:none;padding:8px 14px;border-radius:99px;font-size:15px}
 .nt{font-size:12px;color:var(--mu);margin-top:10px}
+nav{display:flex;gap:8px;padding:0 14px 12px}nav a{flex:1;text-align:center;padding:9px;border-radius:99px;background:#fff;color:var(--ink);text-decoration:none}nav a.on{background:var(--sg);color:#fff}
+.pl{padding:4px 14px 30px;display:grid;gap:12px}.pc{background:#fff;border-radius:18px;padding:14px 16px}.pt{display:flex;justify-content:space-between;margin-bottom:6px}.pt span{color:var(--mu)}
+.it{display:flex;justify-content:space-between;padding:7px 0;border-top:1px solid #e6eee8;color:var(--ink);text-decoration:none}.it em{font-style:normal;color:var(--mu)}.it.r span{color:var(--sg);font-weight:bold}.it.r span:after{content:' ›'}
 </style></head>
 <body><div id="app"></div>
 <script>
-const API='https://toddler-food.dltpcjsrnr.workers.dev'; // 워커 주소로 교체
+const API='https://toddler-food.dltpcjsrnr.workers.dev/'; // 워커 주소로 교체
 const SHOW_PARTNER_NOTICE=false; // 쿠팡 파트너스 링크를 쓰면 true
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const nm=s=>s.replace(/\s*(\d.*|아주 소량|소량)$/,'');
-let M=[];
+let M=[],P=[];
 const hd=t=>`<header><h1>유아식 식단</h1><p>${t}</p></header>`;
 async function load(){
   $('#app').innerHTML=hd('불러오는 중…');
   try{M=await (await fetch(API+'/menus')).json()}catch(e){}
   if(!M.length){try{M=await (await fetch('menus.json')).json()}catch(e){}}
+  try{P=await (await fetch(API+'/plans')).json()}catch(e){}
+  if(!P.length){try{P=await (await fetch('plans.json')).json()}catch(e){}}
   if(!M.length){$('#app').innerHTML=hd('메뉴를 불러오지 못했어요. API 주소와 menus.json 위치를 확인해 주세요.');return}
   route();
 }
 const img=m=>m.ph?`<img src="${API}/photo?id=${m.id}&v=${m.ph}" alt="${esc(m.name)}" loading="lazy">`:'🍲';
-function route(){const m=M.find(x=>x.id==location.hash.slice(2));m?detail(m):list();scrollTo(0,0)}
+const tabs=a=>`<nav><a href="#/" class="${a=='p'?'on':''}">식단</a><a href="#/r" class="${a=='r'?'on':''}">레시피</a></nav>`;
+function route(){const h=location.hash.slice(2),m=M.find(x=>x.id==h);m?detail(m):h=='r'?list():plans();scrollTo(0,0)}
+function plans(){
+  $('#app').innerHTML=`${hd('메뉴를 누르면 레시피로 이동해요')}${tabs('p')}<div class="pl">${P.map((p,i)=>`<div class="pc"><div class="pt"><b>${esc(p.title||'식단 '+(i+1))}</b><span>${esc(p.total||'')}</span></div>${p.items.map(t=>{const r=t.r&&M.find(x=>x.id==t.r);return r?`<a class="it r" href="#/${r.id}"><span>${esc(t.n)}</span><em>${esc(t.g||'')}</em></a>`:`<div class="it"><span>${esc(t.n)}</span><em>${esc(t.g||'')}</em></div>`}).join('')}</div>`).join('')}</div>`;
+}
 function list(){
-  $('#app').innerHTML=`<header><h1>유아식 식단</h1><p>메뉴를 눌러 레시피를 확인하세요 (3회분 기준)</p></header>
+  $('#app').innerHTML=`${hd('레시피는 3회분 기준이에요')}${tabs('r')}
   <div class="g">${M.map(m=>`<a class="c" href="#/${m.id}"><div class="ph">${img(m)}</div><b>${esc(m.name)}</b><small>1회 ${esc(m.serve)}</small></a>`).join('')}</div>`;
 }
 function detail(m){
   const L=m.links||{};
   $('#app').innerHTML=`<div class="ph big">${img(m)}</div><div class="dt">
-  <a class="bk" href="#/">← 목록</a><h2>${esc(m.name)}</h2><p class="mu">1회 제공량 ${esc(m.serve)}</p>
+  <a class="bk" href="#/" onclick="history.length>1?history.back():(location.hash='#/');return false">← 뒤로</a><h2>${esc(m.name)}</h2><p class="mu">1회 제공량 ${esc(m.serve)}</p>
   <h3>재료 (3회분)</h3><ul>${m.ing.map(i=>`<li>${esc(i)}</li>`).join('')}</ul>
   <h3>만드는 법</h3><ol>${m.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>
   ${m.tip?`<p class="tip">${esc(m.tip)}</p>`:''}
