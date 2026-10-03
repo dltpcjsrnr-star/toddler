@@ -20,6 +20,7 @@ let M=[],pw=sessionStorage.pw||'',E=null;
 async function api(p,o={}){
   const r=await fetch(API+p,{...o,headers:{'x-pw':pw}});
   if(r.status==401){sessionStorage.pw=pw='';login('비밀번호가 맞지 않아요.');throw 0}
+  if(!r.ok){alert('저장 실패 ('+r.status+'): 워커를 최신 코드로 배포했는지 확인해 주세요.');throw 0}
   return r;
 }
 function login(msg=''){$('#a').innerHTML=`<p>${msg}</p><input id="p" type="password" placeholder="관리자 비밀번호"><button onclick="go()">로그인</button>`}
@@ -83,6 +84,6 @@ async function svP(){
 }
 async function delP(id){if(!confirm('이 식단을 삭제할까요?'))return;P=P.filter(x=>x.id!=id);await saveP();show()}
 async function mv(i,d){const j=i+d;if(j<0||j>=P.length)return;[P[i],P[j]]=[P[j],P[i]];await saveP();show()}
-async function seedP(){P=await (await fetch('plans.json')).json();await saveP();show()}
+async function seedP(){try{P=await (await fetch('plans.json')).json()}catch(e){return alert('plans.json을 불러오지 못했어요. 깃허브에 plans.json이 올라가 있는지 확인해 주세요.')}await saveP();show()}
 pw?init():login();
 </script></body></html>
