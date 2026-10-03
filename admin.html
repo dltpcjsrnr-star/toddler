@@ -69,8 +69,8 @@ function showP(){
 function editP(id){
   E=P.find(x=>x.id==id)||{id:Date.now(),title:'',total:'',items:[]};
   $('#a').innerHTML=`<label>식단 이름 (비워두면 번호로 표시)</label><input id="pt" value="${esc(E.title||'')}">
-  <label>메뉴 (한 줄에 하나: 메뉴명 | 분량)</label><textarea id="pi" rows="7">${esc(E.items.map(t=>t.n+' | '+(t.g||'')).join('\n'))}</textarea>
-  <p>등록된 레시피와 이름이 같으면 레시피로 연결돼요.</p>
+  <label>메뉴 (한 줄에 하나: 메뉴명 | 분량)</label><textarea id="pi" rows="7">${esc(E.items.map(t=>t.n+' | '+(t.g||'')+(t.r==-1?' | -':'')).join('\n'))}</textarea>
+  <p>등록된 레시피와 이름이 같으면 레시피로 연결돼요. 연결하지 않으려면 줄 끝에 <b>| -</b>를 붙이세요. (예: 계란찜 | 50g | -)</p>
   <label>총량</label><input id="ptt" value="${esc(E.total||'')}" placeholder="예: 140g">
   <button onclick="svP()">저장</button> <button class="s" onclick="show()">취소</button>`;
 }
@@ -78,7 +78,7 @@ async function svP(){
   const old=E.items,L=$('#pi').value.split('\n').map(l=>l.trim()).filter(Boolean);
   if(!L.length)return alert('메뉴를 한 줄 이상 입력하세요.');
   E.title=$('#pt').value.trim();E.total=$('#ptt').value.trim();
-  E.items=L.map(l=>{const[n,...g]=l.split('|'),nm=n.trim(),r=M.find(x=>x.name==nm),o=old.find(t=>t.n==nm);return{n:nm,g:g.join('|').trim(),r:r?r.id:(o?o.r||0:0)}});
+  E.items=L.map(l=>{const p=l.split('|').map(x=>x.trim()),nm=p[0],r=M.find(x=>x.name==nm),o=old.find(t=>t.n==nm);return{n:nm,g:p[1]||'',r:p[2]=='-'?-1:r?r.id:(o&&o.r>0?o.r:0)}});
   if(!P.includes(E))P.push(E);
   await saveP();show();
 }
