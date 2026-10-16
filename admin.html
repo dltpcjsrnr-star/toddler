@@ -42,12 +42,12 @@ function edit(id){
   <div class="actions"><button onclick="sv()">저장하기</button><button class="s" onclick="show()">취소</button></div></div>`;
 }
 function splitIng(s){const m=String(s||'').match(/^(.*?)(?:\s+([~약\d][\d.~\-]*\s*(?:g|kg|ml|mL|개|알|큰술|작은술|쪽|장|컵)))?$/);return{name:(m&&m[1]?m[1]:s).trim(),amount:(m&&m[2]?m[2]:'').trim()}}
-function ingRow(raw,links,i){const p=splitIng(raw),url=links[raw]||links[p.name]||'';return `<div class="ing-row"><input class="in" value="${esc(p.name)}" placeholder="재료명"><input class="ia" value="${esc(p.amount)}" placeholder="용량 예: 90g"><input class="url" value="${esc(url)}" placeholder="쿠팡 파트너스 URL (선택)"><button class="r" type="button" onclick="this.parentElement.remove()">삭제</button></div>`}
+function ingRow(raw,links,i){const p=splitIng(raw);return `<div class="ing-row"><input class="in" value="${esc(p.name)}" placeholder="재료명"><input class="ia" value="${esc(p.amount)}" placeholder="용량 예: 90g"><button class="r" type="button" onclick="this.parentElement.remove()">삭제</button></div>`}
 function addIng(){$('#ings').insertAdjacentHTML('beforeend',ingRow('',{},Date.now()))}
 async function sv(){
   const name=$('#n').value.trim();if(!name)return alert('메뉴명을 입력하세요.');
-  E.name=name;E.serve=$('#sv').value.trim();E.steps=$('#st').value.split('\n').map(x=>x.trim()).filter(Boolean);E.tip=$('#tp').value.trim();E.links={};E.ing=[];
-  document.querySelectorAll('.ing-row').forEach(r=>{const n=r.querySelector('.in').value.trim(),a=r.querySelector('.ia').value.trim(),u=r.querySelector('.url').value.trim();if(!n)return;const full=(n+(a?' '+a:'')).trim();E.ing.push(full);if(/^https?:\/\//.test(u)){E.links[full]=u;E.links[n]=u}});
+  E.name=name;E.serve=$('#sv').value.trim();E.steps=$('#st').value.split('\n').map(x=>x.trim()).filter(Boolean);E.tip=$('#tp').value.trim();delete E.links;E.ing=[];
+  document.querySelectorAll('.ing-row').forEach(r=>{const n=r.querySelector('.in').value.trim(),a=r.querySelector('.ia').value.trim();if(!n)return;E.ing.push((n+(a?' '+a:'')).trim())});
   const f=$('#f').files[0];if(f){await api('/photo?id='+E.id,{method:'POST',body:await shrink(f)});E.ph=Date.now()}
   if(!M.includes(E))M.push(E);await save();show();
 }
