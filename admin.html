@@ -2,17 +2,22 @@
 <html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
+<meta name="theme-color" content="#fffaf2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="얌얌쑥쑥 관리자">
+<link rel="manifest" href="admin-manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.svg">
 <title>얌얌쑥쑥 관리자</title>
 <style>
 *{box-sizing:border-box}body{margin:0 auto;max-width:720px;padding:22px 18px 70px;font:15px/1.55 system-ui,-apple-system,sans-serif;background:#fffaf1;color:#173329}h2{margin:4px 0 20px;font-size:25px}h2:before{content:'🌱 ';}input,textarea,button{font:inherit}input,textarea{width:100%;padding:13px 14px;border:1px solid #e7dfd1;border-radius:14px;background:#fff;margin:5px 0;outline:none}input:focus,textarea:focus{border-color:#4a9567;box-shadow:0 0 0 3px #4a956718}textarea{resize:vertical}button{padding:10px 14px;border-radius:12px;background:#438f61;color:#fff;border:0;cursor:pointer;font-weight:700}button.s{background:#fff;color:#294236;border:1px solid #ddd5c8}button.r{background:#fff0ec;color:#d55b42}.row{display:flex;gap:8px;align-items:center;background:#fff;border:1px solid #eee5d8;border-radius:16px;padding:12px 13px;margin:9px 0}.row span{flex:1;min-width:0}.row small{display:block;color:#8b8b80;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}label{display:block;margin-top:17px;font-weight:800}.tabs{display:flex;gap:8px;background:#f3ecdf;padding:5px;border-radius:15px;margin-bottom:16px}.tabs button{flex:1}.section{background:#fff;border:1px solid #eee5d8;border-radius:18px;padding:16px;margin:14px 0}.hint{font-size:13px;color:#8a887f;margin:5px 0 10px}.ing-row{display:grid;grid-template-columns:1fr 1fr auto;gap:7px;align-items:center;margin:7px 0}.ing-row input{margin:0}.ing-row .url{grid-column:1/3}.ing-row button{grid-column:3;grid-row:1/3}.actions{display:flex;gap:8px;margin-top:20px}.actions button{flex:1;padding:13px}.photo-note{padding:10px 12px;background:#f6f2e9;border-radius:12px;color:#777}.topnote{color:#7b7b72;margin:-14px 0 18px}
-@media(max-width:520px){.row{flex-wrap:wrap}.row span{flex-basis:100%}.ing-row{grid-template-columns:1fr auto}.ing-row .url{grid-column:1}.ing-row button{grid-column:2;grid-row:1/3}}
+.admin-install{margin:0 0 16px;padding:13px 14px;background:#fff;border:1px solid #eee5d8;border-radius:16px;display:flex;gap:10px;align-items:center}.admin-install span{flex:1}.admin-install b{display:block;font-size:13px}.admin-install small{color:#8a887f}.admin-install button{font-size:12px;padding:8px 10px}.install-modal{position:fixed;inset:0;background:#0006;z-index:99;display:grid;place-items:end center;padding:18px}.install-sheet{width:min(500px,100%);background:#fff;border-radius:22px;padding:22px;text-align:center}.install-sheet p{font-size:13px;color:#777;line-height:1.7}.install-sheet .steps{text-align:left;background:#f6f2e9;border-radius:14px;padding:12px;margin:12px 0}.install-sheet button{width:100%}@media(max-width:520px){.row{flex-wrap:wrap}.row span{flex-basis:100%}.ing-row{grid-template-columns:1fr auto}.ing-row .url{grid-column:1}.ing-row button{grid-column:2;grid-row:1/3}}
 </style></head>
 <body><h2>얌얌쑥쑥 관리자</h2><p class="topnote">식단과 레시피를 간편하게 관리하세요.</p><div id="a"></div>
 <script>
 const API='https://toddler-food.dltpcjsrnr.workers.dev'; // 워커 주소로 교체
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-let M=[],pw=sessionStorage.pw||'',E=null;
+let M=[],pw=sessionStorage.pw||'',E=null,deferredInstall=null;function standalone(){return matchMedia('(display-mode:standalone)').matches||navigator.standalone===true}function ios(){return /iphone|ipad|ipod/i.test(navigator.userAgent)}function installAdminUI(){if(standalone())return '';return '<div class="admin-install"><div>🌱</div><span><b>관리자 페이지를 앱처럼 사용</b><small>홈 화면에서 바로 관리할 수 있어요.</small></span><button onclick="installAdmin()">'+(ios()?'홈 화면에 추가':'설치')+'</button></div>'}async function installAdmin(){if(ios()){document.body.insertAdjacentHTML('beforeend','<div class="install-modal" onclick="if(event.target===this)this.remove()"><div class="install-sheet"><h3>관리자 페이지 홈 화면에 추가</h3><p>Safari에서 관리자 페이지를 바로 실행할 수 있어요.</p><div class="steps"><b>1.</b> Safari의 <b>공유 ⬆</b> 버튼<br><b>2.</b> <b>홈 화면에 추가</b> 선택<br><b>3.</b> 오른쪽 위 <b>추가</b></div><button onclick="this.closest(\'.install-modal\').remove()">확인</button></div></div>');return}if(deferredInstall){deferredInstall.prompt();await deferredInstall.userChoice;deferredInstall=null}else alert('브라우저 메뉴에서 앱 설치 또는 홈 화면에 추가를 선택해주세요.')}addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e});if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 async function api(p,o={}){
   const r=await fetch(API+p,{...o,headers:{'x-pw':pw}});
   if(r.status==401){sessionStorage.pw=pw='';login('비밀번호가 맞지 않아요.');throw 0}
@@ -25,7 +30,7 @@ async function init(){M=await (await fetch(API+'/menus')).json();try{P=await (aw
 const save=()=>api('/menus',{method:'POST',body:JSON.stringify(M)});
 function show(){
   if(tab=='p')return showP();
-  $('#a').innerHTML=`${tabs()}<button onclick="edit()">+ 새 메뉴</button> ${M.length?'':'<button class="s" onclick="seed()">기본 메뉴 19개 불러오기</button>'}
+  $('#a').innerHTML=installAdminUI()+`${tabs()}<button onclick="edit()">+ 새 메뉴</button> ${M.length?'':'<button class="s" onclick="seed()">기본 메뉴 19개 불러오기</button>'}
   ${M.map(m=>`<div class="row"><span>${esc(m.name)}${m.ph?' 📷':''}</span><button class="s" onclick="edit(${m.id})">수정</button><button class="r" onclick="del(${m.id})">삭제</button></div>`).join('')}`;
 }
 async function seed(){M=await (await fetch('menus.json')).json();await save();show()}
@@ -34,7 +39,7 @@ function edit(id){
   const rows=E.ing.length?E.ing:[''];
   $('#a').innerHTML=`${tabs()}<div class="section"><label>메뉴명</label><input id="n" value="${esc(E.name)}" placeholder="예: 소고기 두부완자">
   <label>1회 제공량</label><input id="sv" value="${esc(E.serve)}" placeholder="예: 50g">
-  <label>재료</label><p class="hint">재료마다 용량과 쿠팡 파트너스 링크를 등록할 수 있어요.</p>
+  <label>재료</label><p class="hint">재료명과 용량을 입력하면 장바구니에서 쿠팡 파트너스 링크가 자동으로 생성돼요.</p>
   <div id="ings">${rows.map((x,i)=>ingRow(x,E.links||{},i)).join('')}</div><button class="s" type="button" onclick="addIng()">+ 재료 추가</button>
   <label>만드는 법</label><textarea id="st" rows="7" placeholder="한 줄에 한 단계씩 입력">${esc(E.steps.join('\n'))}</textarea>
   <label>팁 <span style="font-weight:400;color:#999">(선택)</span></label><input id="tp" value="${esc(E.tip||'')}">
@@ -60,7 +65,7 @@ let P=[],tab='m';
 const saveP=()=>api('/plans',{method:'POST',body:JSON.stringify(P)});
 const tabs=()=>`<div class="tabs"><button class="${tab=='m'?'':'s'}" onclick="tab='m';show()">🍳 레시피</button><button class="${tab=='p'?'':'s'}" onclick="tab='p';show()">🍱 식단</button></div>`;
 function showP(){
-  $('#a').innerHTML=`${tabs()}<button onclick="editP()">+ 새 식단</button> ${P.length?'':'<button class="s" onclick="seedP()">기본 식단 21개 불러오기</button>'}
+  $('#a').innerHTML=installAdminUI()+`${tabs()}<button onclick="editP()">+ 새 식단</button> ${P.length?'':'<button class="s" onclick="seedP()">기본 식단 21개 불러오기</button>'}
   ${P.map((p,i)=>`<div class="row"><span>${esc(p.title||'식단 '+(i+1))}<small>${esc(p.items.map(t=>t.n).join(' + '))}</small></span><button class="s" onclick="mv(${i},-1)">↑</button><button class="s" onclick="mv(${i},1)">↓</button><button class="s" onclick="editP(${p.id})">수정</button><button class="r" onclick="delP(${p.id})">삭제</button></div>`).join('')}`;
 }
 function editP(id){
