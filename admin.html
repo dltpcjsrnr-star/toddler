@@ -30,7 +30,7 @@ function show(){
 }
 async function seed(){M=await (await fetch('menus.json')).json();await save();show()}
 function edit(id){
-  E=M.find(x=>x.id==id)||{id:Date.now(),name:'',serve:'',ing:[],steps:[],tip:'',links:{}};
+  E=M.find(x=>x.id==id)||{id:Date.now(),name:'',serve:'',ing:[],steps:[],tip:'',links:{},addedAt:new Date().toISOString()};
   const rows=E.ing.length?E.ing:[''];
   $('#a').innerHTML=`${tabs()}<div class="section"><label>메뉴명</label><input id="n" value="${esc(E.name)}" placeholder="예: 소고기 두부완자">
   <label>1회 제공량</label><input id="sv" value="${esc(E.serve)}" placeholder="예: 50g">
@@ -64,7 +64,7 @@ function showP(){
   ${P.map((p,i)=>`<div class="row"><span>${esc(p.title||'식단 '+(i+1))}<small>${esc(p.items.map(t=>t.n).join(' + '))}</small></span><button class="s" onclick="mv(${i},-1)">↑</button><button class="s" onclick="mv(${i},1)">↓</button><button class="s" onclick="editP(${p.id})">수정</button><button class="r" onclick="delP(${p.id})">삭제</button></div>`).join('')}`;
 }
 function editP(id){
-  E=P.find(x=>x.id==id)||{id:Date.now(),title:'',total:'',items:[]};
+  E=P.find(x=>x.id==id)||{id:Date.now(),title:'',total:'',items:[],addedAt:new Date().toISOString()};
   $('#a').innerHTML=`<label>식단 이름 (비워두면 번호로 표시)</label><input id="pt" value="${esc(E.title||'')}">
   <label>메뉴 (한 줄에 하나: 메뉴명 | 분량)</label><textarea id="pi" rows="7">${esc(E.items.map(t=>t.n+' | '+(t.g||'')+(t.r==-1?' | -':'')).join('\n'))}</textarea>
   <p>등록된 레시피와 이름이 같으면 레시피로 연결돼요. 연결하지 않으려면 줄 끝에 <b>| -</b>를 붙이세요. (예: 계란찜 | 50g | -)</p>
