@@ -74,6 +74,9 @@ function editP(id){
   <label>메뉴 (한 줄에 하나: 메뉴명 | 분량)</label><textarea id="pi" rows="7">${esc(E.items.map(t=>t.n+' | '+(t.g||'')+(t.r==-1?' | -':'')).join('\n'))}</textarea>
   <p>등록된 레시피와 이름이 같으면 레시피로 연결돼요. 연결하지 않으려면 줄 끝에 <b>| -</b>를 붙이세요. (예: 계란찜 | 50g | -)</p>
   <label>총량</label><input id="ptt" value="${esc(E.total||'')}" placeholder="예: 140g">
+  <label>식단 대표사진 <span style="font-weight:400;color:#999">(선택)</span></label><input id="pf" type="file" accept="image/*">
+  <div class="photo-note">${E.ph?'📷 현재 식단 대표사진이 등록되어 있어요. 새 파일을 선택하면 교체됩니다.':'사진을 등록하지 않으면 포함된 레시피 사진을 사용해요.'}</div>
+  ${E.ph?'<button class="r" type="button" style="margin-top:8px" onclick="delPlanPhoto()">대표사진 삭제</button>':''}
   <button onclick="svP()">저장</button> <button class="s" onclick="show()">취소</button>`;
 }
 async function svP(){
@@ -81,9 +84,11 @@ async function svP(){
   if(!L.length)return alert('메뉴를 한 줄 이상 입력하세요.');
   E.title=$('#pt').value.trim();E.total=$('#ptt').value.trim();
   E.items=L.map(l=>{const p=l.split('|').map(x=>x.trim()),nm=p[0],r=M.find(x=>x.name==nm),o=old.find(t=>t.n==nm);return{n:nm,g:p[1]||'',r:p[2]=='-'?-1:r?r.id:(o&&o.r>0?o.r:0)}});
+  const pf=$('#pf').files[0];if(pf){await api('/photo?id=plan-'+E.id,{method:'POST',body:await shrink(pf)});E.ph=Date.now()}
   if(!P.includes(E))P.push(E);
   await saveP();show();
 }
+async function delPlanPhoto(){if(!E.ph)return;if(!confirm('식단 대표사진을 삭제할까요?'))return;await api('/photo?id=plan-'+E.id,{method:'DELETE'});delete E.ph;await saveP();editP(E.id)}
 async function delP(id){if(!confirm('이 식단을 삭제할까요?'))return;P=P.filter(x=>x.id!=id);await saveP();show()}
 async function mv(i,d){const j=i+d;if(j<0||j>=P.length)return;[P[i],P[j]]=[P[j],P[i]];await saveP();show()}
 async function seedP(){try{P=await (await fetch('plans.json')).json()}catch(e){return alert('plans.json을 불러오지 못했어요. 깃허브에 plans.json이 올라가 있는지 확인해 주세요.')}await saveP();show()}
