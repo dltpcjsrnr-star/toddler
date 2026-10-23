@@ -39,6 +39,8 @@ function edit(id){
   const rows=E.ing.length?E.ing:[''];
   $('#a').innerHTML=`${tabs()}<div class="section"><label>메뉴명</label><input id="n" value="${esc(E.name)}" placeholder="예: 소고기 두부완자">
   <label>1회 제공량</label><input id="sv" value="${esc(E.serve)}" placeholder="예: 50g">
+  <label>재료 기준 회분</label><input id="servings" type="number" min="1" step="1" value="${esc(E.servings||3)}" placeholder="예: 3">
+  <p class="hint">레시피 화면에 ‘재료 (3회분)’처럼 표시돼요.</p>
   <label>재료</label><p class="hint">재료명과 용량을 입력하면 장바구니에서 쿠팡 파트너스 링크가 자동으로 생성돼요.</p>
   <div id="ings">${rows.map((x,i)=>ingRow(x,E.links||{},i)).join('')}</div><button class="s" type="button" onclick="addIng()">+ 재료 추가</button>
   <label>만드는 법</label><textarea id="st" rows="7" placeholder="한 줄에 한 단계씩 입력">${esc(E.steps.join('\n'))}</textarea>
@@ -51,7 +53,7 @@ function ingRow(raw,links,i){const p=splitIng(raw);return `<div class="ing-row">
 function addIng(){$('#ings').insertAdjacentHTML('beforeend',ingRow('',{},Date.now()))}
 async function sv(){
   const name=$('#n').value.trim();if(!name)return alert('메뉴명을 입력하세요.');
-  E.name=name;E.serve=$('#sv').value.trim();E.steps=$('#st').value.split('\n').map(x=>x.trim()).filter(Boolean);E.tip=$('#tp').value.trim();delete E.links;E.ing=[];
+  E.name=name;E.serve=$('#sv').value.trim();E.servings=Math.max(1,parseInt($('#servings').value)||3);E.steps=$('#st').value.split('\n').map(x=>x.trim()).filter(Boolean);E.tip=$('#tp').value.trim();delete E.links;E.ing=[];
   document.querySelectorAll('.ing-row').forEach(r=>{const n=r.querySelector('.in').value.trim(),a=r.querySelector('.ia').value.trim();if(!n)return;E.ing.push((n+(a?' '+a:'')).trim())});
   const f=$('#f').files[0];if(f){await api('/photo?id='+E.id,{method:'POST',body:await shrink(f)});E.ph=Date.now()}
   if(!M.includes(E))M.push(E);await save();show();
